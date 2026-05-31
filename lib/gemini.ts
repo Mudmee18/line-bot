@@ -57,7 +57,7 @@ export async function askGemini(
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         temperature: 1.0,
@@ -67,11 +67,11 @@ export async function askGemini(
 
     const candidate = response.candidates?.[0];
     const finishReason = candidate?.finishReason;
-    const thoughtsTokens = response.usageMetadata?.thoughtsTokenCount ?? 0;
     const outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+    const totalTokens = response.usageMetadata?.totalTokenCount ?? 0;
 
     console.log(
-      `[gemini] finishReason=${finishReason} thoughtsTokens=${thoughtsTokens} outputTokens=${outputTokens}`
+      `[gemini] finishReason=${finishReason} outputTokens=${outputTokens} totalTokens=${totalTokens}`
     );
 
     if (finishReason === "MAX_TOKENS") {
@@ -79,7 +79,8 @@ export async function askGemini(
       return DEFAULT_MESSAGE;
     }
 
-    return candidate?.content?.parts?.[0]?.text?.trim() ?? DEFAULT_MESSAGE;
+    const text = response.text ?? candidate?.content?.parts?.[0]?.text;
+    return text?.trim() ?? DEFAULT_MESSAGE;
   } catch (err) {
     console.error("[gemini] error:", err);
     return DEFAULT_MESSAGE;
